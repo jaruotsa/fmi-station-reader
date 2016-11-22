@@ -17,6 +17,11 @@ def get_fmi_url(api_key):
     if api_key:
         return 'http://data.fmi.fi/fmi-apikey/%s/wfs' % api_key
 
+def getresponse(url, params):
+    if(url and params):
+        return requests.get(url, params=params)
+    return None
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("api_key", help="FMI API key.")
