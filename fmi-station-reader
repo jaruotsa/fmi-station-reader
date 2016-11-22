@@ -6,6 +6,11 @@ import datetime
 
 import xml.etree.ElementTree as ET
 
+FMI_XML_NAMESPACES = {
+    'wfs'   : 'http://www.opengis.net/wfs/2.0',
+    'gml'   : 'http://www.opengis.net/gml/3.2',
+    'BsWfs' : 'http://xml.fmi.fi/schema/wfs/2.0'
+}
 
 def get_fmi_url(api_key):
     """Get base URL for FMI service. Return None if api_key is missing."""
