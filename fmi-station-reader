@@ -1,0 +1,64 @@
+#!usr/bin/env python
+
+import argparse
+import requests
+import datetime
+
+import xml.etree.ElementTree as ET
+
+
+def get_fmi_url(api_key):
+    """Get base URL for FMI service. Return None if api_key is missing."""
+    if api_key:
+        return 'http://data.fmi.fi/fmi-apikey/%s/wfs' % api_key
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("api_key", help="FMI API key.")
+    parser.add_argument("fmisid", help="FMISID of the station.")
+    parser.add_argument("-q", "--query",
+            #default='fmi::observations::weather::daily::simple',
+            #default='fmi::observations::weather::daily::timevaluepair',
+            default='fmi::observations::weather::simple',
+            #default='fmi::observations::weather::timevaluepair',
+            help="FMI stored query identifier.")
+    parser.add_argument("-t", "--timesteps",
+            default=1,
+            help="Timesteps.")
+    args = parser.parse_args()
+
+    url = get_fmi_url(args.api_key)
+
+    endtime = datetime.datetime.utcnow().replace(microsecond=0)
+    starttime = endtime - datetime.timedelta(minutes=11) 
+
+    params = {
+            'request' : 'getFeature',
+            'storedquery_id' : args.query,
+            'fmisid' : args.fmisid,
+            'timesteps' : args.timesteps,
+            'endtime' : endtime.isoformat() + 'Z',
+            'starttime' : starttime.isoformat() + 'Z'
+    }
+    
+    if (url and params):
+        response = requests.get(url, params=params)
+        print response.text
+
+        root = ET.fromstring(response.text)
+
+        for child in root:
+            for line in child:
+                print "---"
+                for l in line:
+                    if l.tag == '{http://xml.fmi.fi/schema/wfs/2.0}ParameterName':
+                        print l.tag, l.text
+                    if l.tag == '{http://xml.fmi.fi/schema/wfs/2.0}ParameterValue':
+                        print l.tag, l.text
+                    if l.tag == '{http://xml.fmi.fi/schema/wfs/2.0}Time':
+                        print l.tag, l.text
+                print "---"
+
+
+if __name__ == "__main__":
+    main()
