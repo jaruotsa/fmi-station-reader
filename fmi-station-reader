@@ -40,7 +40,7 @@ def main():
     url = get_fmi_url(args.api_key)
 
     endtime = datetime.datetime.utcnow().replace(microsecond=0)
-    starttime = endtime - datetime.timedelta(minutes=11) 
+    starttime = endtime - datetime.timedelta(minutes=20) 
 
     params = {
             'request' : 'getFeature',
@@ -50,25 +50,28 @@ def main():
             'endtime' : endtime.isoformat() + 'Z',
             'starttime' : starttime.isoformat() + 'Z'
     }
-    
-    if (url and params):
-        response = requests.get(url, params=params)
-        print response.text
 
+
+    response = getresponse(url, params)
+    if response:
+        results = {}
         root = ET.fromstring(response.text)
+        for elem in root.iterfind('.//BsWfs:BsWfsElement', FMI_XML_NAMESPACES):
+            time = elem.find('.//BsWfs:Time', FMI_XML_NAMESPACES).text
+            name = elem.find('.//BsWfs:ParameterName', FMI_XML_NAMESPACES).text
+            value = elem.find('.//BsWfs:ParameterValue', FMI_XML_NAMESPACES).text
 
-        for child in root:
-            for line in child:
-                print "---"
-                for l in line:
-                    if l.tag == '{http://xml.fmi.fi/schema/wfs/2.0}ParameterName':
-                        print l.tag, l.text
-                    if l.tag == '{http://xml.fmi.fi/schema/wfs/2.0}ParameterValue':
-                        print l.tag, l.text
-                    if l.tag == '{http://xml.fmi.fi/schema/wfs/2.0}Time':
-                        print l.tag, l.text
-                print "---"
-
+            measuretime = results.get(time)
+            if measuretime:
+                parameter = measuretime.get(name)
+                if parameter:
+                    print "ERROR: Duplicate value for parameter:", name  
+                else:
+                    measuretime[name] = value
+            else:
+                results[time] = { name : value }
+    else:
+        print 'ERROR: Could not get data from FMI API.'
 
 if __name__ == "__main__":
     main()
