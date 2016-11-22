@@ -3,6 +3,7 @@
 import argparse
 import requests
 import datetime
+import pprint
 
 import xml.etree.ElementTree as ET
 
@@ -70,6 +71,9 @@ def main():
                     measuretime[name] = value
             else:
                 results[time] = { name : value }
+    
+        pp = pprint.PrettyPrinter(indent=4) 
+        pp.pprint(results)
     else:
         print 'ERROR: Could not get data from FMI API.'
 
