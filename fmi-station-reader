@@ -10,15 +10,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("api_key", help="FMI API key.")
     parser.add_argument("fmisid", help="FMISID of the station.")
-    parser.add_argument("-q", "--query",
-            #default='fmi::observations::weather::daily::simple',
-            #default='fmi::observations::weather::daily::timevaluepair',
-            default='fmi::observations::weather::simple',
-            #default='fmi::observations::weather::timevaluepair',
-            help="FMI stored query identifier.")
-    parser.add_argument("-t", "--timesteps",
-            default=1,
-            help="Timesteps.")
+    parser.add_argument("-t", "--timesteps", default=1, help="Timesteps.")
     args = parser.parse_args()
 
     endtime = datetime.datetime.utcnow().replace(microsecond=0)
@@ -26,7 +18,7 @@ def main():
 
     params = {
             'request' : 'getFeature',
-            'storedquery_id' : args.query,
+            'storedquery_id' : 'fmi::observations::weather::simple',
             'fmisid' : args.fmisid,
             'timesteps' : args.timesteps,
             'endtime' : endtime.isoformat() + 'Z',
