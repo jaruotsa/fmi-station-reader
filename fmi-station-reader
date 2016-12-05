@@ -1,27 +1,10 @@
 #!usr/bin/env python
 
 import argparse
-import requests
 import datetime
 import pprint
 
-import xml.etree.ElementTree as ET
-
-FMI_XML_NAMESPACES = {
-    'wfs'   : 'http://www.opengis.net/wfs/2.0',
-    'gml'   : 'http://www.opengis.net/gml/3.2',
-    'BsWfs' : 'http://xml.fmi.fi/schema/wfs/2.0'
-}
-
-def get_fmi_url(api_key):
-    """Get base URL for FMI service. Return None if api_key is missing."""
-    if api_key:
-        return 'http://data.fmi.fi/fmi-apikey/%s/wfs' % api_key
-
-def getresponse(url, params):
-    if(url and params):
-        return requests.get(url, params=params)
-    return None
+import fmiapi
 
 def main():
     parser = argparse.ArgumentParser()
@@ -38,8 +21,6 @@ def main():
             help="Timesteps.")
     args = parser.parse_args()
 
-    url = get_fmi_url(args.api_key)
-
     endtime = datetime.datetime.utcnow().replace(microsecond=0)
     starttime = endtime - datetime.timedelta(minutes=20) 
 
@@ -52,30 +33,10 @@ def main():
             'starttime' : starttime.isoformat() + 'Z'
     }
 
-
-    response = getresponse(url, params)
-    if response:
-        results = {}
-        root = ET.fromstring(response.text)
-        for elem in root.iterfind('.//BsWfs:BsWfsElement', FMI_XML_NAMESPACES):
-            time = elem.find('.//BsWfs:Time', FMI_XML_NAMESPACES).text
-            name = elem.find('.//BsWfs:ParameterName', FMI_XML_NAMESPACES).text
-            value = elem.find('.//BsWfs:ParameterValue', FMI_XML_NAMESPACES).text
-
-            measuretime = results.get(time)
-            if measuretime:
-                parameter = measuretime.get(name)
-                if parameter:
-                    print "ERROR: Duplicate value for parameter:", name  
-                else:
-                    measuretime[name] = value
-            else:
-                results[time] = { name : value }
-    
-        pp = pprint.PrettyPrinter(indent=4) 
+    results = fmiapi.fmi_observations_weather_simple(args.api_key, params)
+    if results:
+        pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(results)
-    else:
-        print 'ERROR: Could not get data from FMI API.'
 
 if __name__ == "__main__":
     main()
